@@ -9,8 +9,6 @@ import ctypes
 from pysimavr.avr import Avr
 from pysimavr.firmware import Firmware
 
-import thread
-
 from Board import Board
     
 def main():
@@ -21,10 +19,6 @@ def main():
     board = Board(avr)
 
     running = True
-    def runAVR(avr):
-        while running:
-            avr.run()
-    thread.start_new_thread(runAVR, (avr,))
     
     sdl2.ext.init()
     
@@ -39,6 +33,8 @@ def main():
     window.show()
 
     while running:
+        targetTime = SDL_GetTicks() + 17
+        
         board.lcd.draw(pixbuf)
         buffer = (ctypes.c_uint32 * (board.lcd.HEIGHT * board.lcd.WIDTH))(*pixbuf)
         SDL_UpdateTexture(texture, None, buffer, board.lcd.WIDTH * 4)
@@ -53,8 +49,9 @@ def main():
                 break
             elif event.type in [SDL_KEYDOWN, SDL_KEYUP]:
                 board.keypad.keypress(event.key.keysym.scancode, event.key.state == SDL_PRESSED)
-                
-        SDL_Delay(17)
+
+        while SDL_GetTicks() < targetTime:
+            avr.run()
 
     sdl2.ext.quit()
     return 0    
