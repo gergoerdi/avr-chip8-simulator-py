@@ -5,12 +5,14 @@ from pysimavr.swig.simavr import avr_raise_irq
 
 from Keypad import Keypad
 from LCD import LCD
+from SPIRAM import SPIRAM
 
 class Board:
     def __init__(self, avr):
         self.avr = avr
         self.lcd = LCD(self)
         self.keypad = Keypad(self)
+        self.ram = SPIRAM(self)
 
         self.misoirq = avr.irq.getspi(0, utils.SPI_IRQ_INPUT)
         self.miso(0)
@@ -23,3 +25,4 @@ class Board:
     def mosi(self, irq, value):
         # print("mosi: %s" % value)
         self.lcd.mosi(value)
+        self.ram.mosi(value)
