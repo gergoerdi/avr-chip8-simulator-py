@@ -31,7 +31,8 @@ class LCD:
             return
             
         if self.dc.value == 0:
-            print "Command to LCD: 0x%02x" % value
+            #print "Command to LCD: 0x%02x" % value
+            pass
         else:
             (x, y) = self.nextXY
             for i in range(8):
