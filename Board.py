@@ -13,6 +13,8 @@ class Board:
         self.lcd = LCD(self)
         self.keypad = Keypad(self)
         self.ram = SPIRAM(self)
+        avr_connect_irq(avr.irq.getioport(('D', 6)), self.ram.cs)
+        
 
         self.misoirq = avr.irq.getspi(0, utils.SPI_IRQ_INPUT)
         self.miso(0)
