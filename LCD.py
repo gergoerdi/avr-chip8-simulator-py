@@ -1,4 +1,5 @@
 import sdl2.ext
+from pysimavr.swig.simavr import avr_alloc_irq
 
 class LCD:
     WIDTH = 84
@@ -8,9 +9,15 @@ class LCD:
     BG_COLOR = sdl2.ext.Color(0xff, 0x73, 0xBD, 0x71)
     
     def __init__(self, board):
+        self.board = board
+
+        self.sce = avr_alloc_irq(board.avr.irq_pool, 0, 1, None)
+        self.dc = avr_alloc_irq(board.avr.irq_pool, 0, 1, None)
+        self.reset = avr_alloc_irq(board.avr.irq_pool, 0, 1, None)
+        
+        self.dirty = False
         self.framebuf = [[False for i in range(self.HEIGHT)] for i in range(self.WIDTH)]
-        self.framebuf[10][10] = True
-        pass
+        self.nextXY = (0, 0)
 
     def draw(self, pixels):
         for x in range(self.WIDTH):
@@ -20,4 +27,22 @@ class LCD:
         
 
     def mosi(self, value):
-        pass
+        if self.sce.value != 0:
+            return
+            
+        if self.dc.value == 0:
+            print "Command to LCD: 0x%02x" % value
+        else:
+            (x, y) = self.nextXY
+            for i in range(8):
+                self.framebuf[x][y + i] = value & 0x01
+                value = value >> 1
+            self.dirty = True
+
+            y = y + 8
+            if y >= self.HEIGHT:
+                (x, y) = (x + 1, 0)
+            if x >= self.WIDTH:
+                (x, y) = (0, 0)
+
+            self.nextXY = (x, y)

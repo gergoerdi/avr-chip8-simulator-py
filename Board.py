@@ -11,7 +11,12 @@ class Board:
     def __init__(self, avr):
         self.avr = avr
         self.lcd = LCD(self)
+        avr_connect_irq(avr.irq.getioport(('D', 3)), self.lcd.sce)
+        avr_connect_irq(avr.irq.getioport(('D', 5)), self.lcd.dc)
+        avr_connect_irq(avr.irq.getioport(('D', 4)), self.lcd.reset)
+        
         self.keypad = Keypad(self)
+
         self.ram = SPIRAM(self)
         avr_connect_irq(avr.irq.getioport(('D', 6)), self.ram.cs)
         
