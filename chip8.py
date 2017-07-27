@@ -6,11 +6,26 @@ from sdl2 import *
 import sdl2.ext
 import ctypes
 
+from pysimavr.avr import Avr
+from pysimavr.firmware import Firmware
+
+import thread
+
 from Board import Board
     
 def main():
-    board = Board()
+    avr = Avr(mcu='atmega328p',f_cpu=16000000)
+    firmware = Firmware('image.elf')
+    avr.load_firmware(firmware)
+    
+    board = Board(avr)
 
+    running = True
+    def runAVR(avr):
+        while running:
+            avr.run()
+    thread.start_new_thread(runAVR, (avr,))
+    
     sdl2.ext.init()
     
     window = sdl2.ext.Window("CHIP-328", size=(board.lcd.WIDTH * 8, board.lcd.HEIGHT * 8))
@@ -22,8 +37,7 @@ def main():
                                 board.lcd.WIDTH, board.lcd.HEIGHT)
 
     window.show()
-    running = True
-    
+
     while running:
         board.lcd.draw(pixbuf)
         buffer = (ctypes.c_uint32 * (board.lcd.HEIGHT * board.lcd.WIDTH))(*pixbuf)
