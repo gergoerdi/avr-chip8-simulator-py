@@ -9,23 +9,23 @@ class Keypad:
         SDL_SCANCODE_2: (0, 1),
         SDL_SCANCODE_3: (0, 2),
         SDL_SCANCODE_4: (0, 3),
-        
+
         SDL_SCANCODE_Q: (1, 0),
         SDL_SCANCODE_W: (1, 1),
         SDL_SCANCODE_E: (1, 2),
         SDL_SCANCODE_R: (1, 3),
-        
+
         SDL_SCANCODE_A: (2, 0),
         SDL_SCANCODE_S: (2, 1),
         SDL_SCANCODE_D: (2, 2),
         SDL_SCANCODE_F: (2, 3),
-        
+
         SDL_SCANCODE_Z: (3, 0),
         SDL_SCANCODE_X: (3, 1),
         SDL_SCANCODE_C: (3, 2),
         SDL_SCANCODE_V: (3, 3)
     }
-    
+
     def __init__(self, board):
         self.keystate = [[False for i in range(4)] for i in range(4)]
         self.rows = [avr_alloc_irq(board.avr.irq_pool, 0, 1, None) for i in range(4)]
