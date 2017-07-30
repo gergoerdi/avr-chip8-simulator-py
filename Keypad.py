@@ -30,13 +30,11 @@ class Keypad:
         self.keystate = [[False for i in range(4)] for i in range(4)]
         self.rows = [avr_alloc_irq(board.avr.irq_pool, 0, 1, None) for i in range(4)]
         self.cols = [avr_alloc_irq(board.avr.irq_pool, 0, 1, None) for i in range(4)]
+        self.row_selected = [False for row in self.rows]
 
-        # for row in self.rows:
-        #     board.avr.irq._register_callback(row, self.scanRow, True)
+        for (i, row) in enumerate(self.rows):
+            board.avr.irq._register_callback(row, lambda irq, value, i=i: self.scan_row(i, value), True)
 
-        for (pin, row) in zip([('C', 1), ('C', 0), ('B', 2), ('B', 1)], self.rows):
-            board.avr.irq.ioport_register_notify(self.scanRow, pin)
-            
     def keypress(self, scancode, pressed):
         try:
             (row, col) = self.keymap[scancode]
@@ -44,14 +42,12 @@ class Keypad:
         except KeyError:
             pass
 
-    def scanRow(self, irq, value):
+    def scan_row(self, i, value):
+        self.row_selected[i] = (value == 0)
+
         for (j, col) in enumerate(self.cols):
             found = False
             for (i, row) in enumerate(self.rows):
-                # sys.stdout.write('#' if self.keystate[j][i] else '.')
-                if row.value == 0:
+                if self.row_selected[i]:
                     found = found or self.keystate[i][j]
-            # sys.stdout.write('\n')
             avr_raise_irq(col, 0 if found else 1)
-        #     sys.stdout.write('#' if found else '.')
-        # sys.stdout.write('\n')
