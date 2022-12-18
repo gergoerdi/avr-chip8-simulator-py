@@ -25,13 +25,13 @@ class Board:
         # for (i, col) in enumerate(self.keypad.cols):
         #     def cb(irq, value, i = i):
         #         if value == 0:
-        #             print "keypadCols: %d" % i
+        #             print("keypadCols: %d" % i)
         #     avr.irq._register_callback(col, cb, True)
             
         for (i, pin) in enumerate([('C', 5), ('C', 4), ('C', 3), ('C', 2)]):
             def cb(irq, value, i = i):
                 if value == 0:
-                    print "keypadCols: %d" % i
+                    print("keypadCols: %d" % i)
             avr.irq.ioport_register_notify(cb, pin)
 
         self.ram = SPIRAM(self)

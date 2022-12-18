@@ -30,10 +30,10 @@ class SPIRAM:
 
     def PARAM(self, value):
         if self.command == self.CMD_WRITE:
-            print "ADDR = 0x%04x, VALUE <= 0x%02x" % (self.addr, value)
+            print("ADDR = 0x%04x, VALUE <= 0x%02x" % (self.addr, value))
             self.ram[self.addr] = value
         elif self.command == self.CMD_READ:
-            print "ADDR = 0x%04x, VALUE => 0x%02x" % (self.addr, self.ram[self.addr])
+            print("ADDR = 0x%04x, VALUE => 0x%02x" % (self.addr, self.ram[self.addr]))
             self.board.miso(self.ram[self.addr])
         self.state = self.COMMAND
 
