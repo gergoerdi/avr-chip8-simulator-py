@@ -35,12 +35,9 @@ class Keypad:
         for (i, row) in enumerate(self.rows):
             board.avr.irq._register_callback(row, lambda irq, value, i=i: self.scan_row(i, value), True)
 
-    def keypress(self, scancode, pressed):
-        try:
-            (row, col) = self.keymap[scancode]
-            self.keystate[row][col] = pressed
-        except KeyError:
-            pass
+    def set_keystate(self, keystate):
+        for (scancode, (row, col)) in self.keymap.items():
+            self.keystate[row][col] = keystate[scancode]
 
     def scan_row(self, i, value):
         self.row_selected[i] = (value == 0)

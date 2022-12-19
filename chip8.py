@@ -22,7 +22,7 @@ def main():
     
     sdl2.ext.init()
     
-    window = sdl2.ext.Window("CHIP-328", size=(board.lcd.WIDTH * 8, board.lcd.HEIGHT * 8))
+    window = sdl2.ext.Window("CHIRP-328", size=(board.lcd.WIDTH * 8, board.lcd.HEIGHT * 8))
     renderer = SDL_CreateRenderer(window.window, -1, SDL_RENDERER_ACCELERATED)
     SDL_RenderSetLogicalSize(renderer, board.lcd.WIDTH * 8, board.lcd.HEIGHT * 8)
     
@@ -41,14 +41,15 @@ def main():
         SDL_RenderCopy(renderer, texture, None, None)
         SDL_RenderPresent(renderer)
 
-        events = sdl2.ext.get_events()
-        for event in events:
+        for event in sdl2.ext.get_events():
             if event.type == SDL_QUIT:
                 running = False
                 break
-            elif event.type in [SDL_KEYDOWN, SDL_KEYUP]:
-                board.keypad.keypress(event.key.keysym.scancode, event.key.state == SDL_PRESSED)
-
+            elif event.type == SDL_KEYDOWN and event.key.keysym.scancode == SDL_SCANCODE_ESCAPE:
+                running = False
+                break
+        board.keypad.set_keystate(SDL_GetKeyboardState(None))
+            
         while SDL_GetTicks() < targetTime:
             avr.run()
 
