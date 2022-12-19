@@ -1,8 +1,10 @@
 import sdl2.ext
+from sdl2 import *
 from pysimavr.swig.simavr import avr_alloc_irq
 import array
+import ctypes
 
-class LCD:
+class Screen:
     WIDTH = 84
     HEIGHT = 48
 
@@ -10,25 +12,36 @@ class LCD:
     BG_COLOR = int(sdl2.ext.Color(0xff, 0x73, 0xBD, 0x71))
     
     def __init__(self, board):
-        self.board = board
-
-        self.sce = avr_alloc_irq(board.avr.irq_pool, 0, 1, None)
-        self.dc = avr_alloc_irq(board.avr.irq_pool, 0, 1, None)
-        self.reset = avr_alloc_irq(board.avr.irq_pool, 0, 1, None)
+        self.sce = board.create_output()
+        self.dc = board.create_output()
+        self.reset = board.create_output()
+        board.connect_mosi(self.mosi)
         
         self.dirty = False
         self.pixbuf = array.array('I', [0 for i in range(self.WIDTH * self.HEIGHT)])
         self.nextXY = (0, 0)
 
+        self.window = sdl2.ext.Window("CHIRP-328", size=(self.WIDTH * 8, self.HEIGHT * 8))
+        self.renderer = SDL_CreateRenderer(self.window.window, -1, SDL_RENDERER_ACCELERATED)
+        SDL_RenderSetLogicalSize(self.renderer, self.WIDTH * 8, self.HEIGHT * 8)
+        self.texture = SDL_CreateTexture(
+            self.renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING,
+            self.WIDTH, self.HEIGHT)
+        self.window.show()
+
     def draw(self):
-        return self.pixbuf
+        buffer = (ctypes.c_uint32 * (self.HEIGHT * self.WIDTH))(*self.pixbuf)
+        SDL_UpdateTexture(self.texture, None, buffer, self.WIDTH * 4)
+        SDL_RenderClear(self.renderer)
+        SDL_RenderCopy(self.renderer, self.texture, None, None)
+        SDL_RenderPresent(self.renderer)
 
     def mosi(self, value):
         if self.sce.value != 0:
             return
             
         if self.dc.value == 0:
-            #print "Command to LCD: 0x%02x" % value
+            print "Command to screen: 0x%02x" % value
             pass
         else:
             (x, y) = self.nextXY
@@ -42,5 +55,4 @@ class LCD:
                 (x, y) = (x + 1, 0)
             if x >= self.WIDTH:
                 (x, y) = (0, 0)
-
             self.nextXY = (x, y)

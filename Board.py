@@ -1,20 +1,21 @@
 from pysimavr.avr import Avr
+from pysimavr.swig.simavr import avr_alloc_irq, avr_raise_irq
 from pysimavr.connect import avr_connect_irq
 import pysimavr.swig.utils as utils
-from pysimavr.swig.simavr import avr_raise_irq
 
 from Keypad import Keypad
-from LCD import LCD
+from Screen import Screen
 from SPIRAM import SPIRAM
 
 class Board:
     def __init__(self, avr):
         self.avr = avr
+        self.mosi_callbacks = []
 
-        self.lcd = LCD(self)
-        avr_connect_irq(avr.irq.getioport(('D', 3)), self.lcd.sce)
-        avr_connect_irq(avr.irq.getioport(('D', 5)), self.lcd.dc)
-        avr_connect_irq(avr.irq.getioport(('D', 4)), self.lcd.reset)
+        self.screen = Screen(self)
+        self.connect_output(('D', 3), self.screen.sce)
+        self.connect_output(('D', 5), self.screen.dc)
+        self.connect_output(('D', 4), self.screen.reset)
         
         self.keypad = Keypad(self)
         for (pin, row) in zip([('C', 1), ('C', 0), ('B', 2), ('B', 1)], self.keypad.rows):
@@ -22,12 +23,6 @@ class Board:
         for (pin, col) in zip([('C', 5), ('C', 4), ('C', 3), ('C', 2)], self.keypad.cols):
             avr_connect_irq(col, avr.irq.getioport(pin))
 
-        # for (i, col) in enumerate(self.keypad.cols):
-        #     def cb(irq, value, i = i):
-        #         if value == 0:
-        #             print("keypadCols: %d" % i)
-        #     avr.irq._register_callback(col, cb, True)
-            
         for (i, pin) in enumerate([('C', 5), ('C', 4), ('C', 3), ('C', 2)]):
             def cb(irq, value, i = i):
                 if value == 0:
@@ -45,5 +40,20 @@ class Board:
         avr_raise_irq(self.misoirq, value)
         
     def mosi(self, irq, value):
-        self.lcd.mosi(value)
-        self.ram.mosi(value)
+        for cb in self.mosi_callbacks:
+            cb(value)
+
+    def connect_input(self, pin):
+        irq = avr_alloc_irq(self.avr.irq_pool, 0, 1, None)
+        avr_connect_irq(irq, self.avr.irq.getioport(pin))
+        return lambda(val): avr_raise_irq(irq, val)
+
+    def create_output(self):
+        return avr_alloc_irq(self.avr.irq_pool, 0, 1, None)
+
+    def connect_output(self, pin, listener):
+        avr_connect_irq(self.avr.irq.getioport(pin), listener)
+
+    def connect_mosi(self, cb):
+        self.mosi_callbacks += [cb]
+        return self.miso
