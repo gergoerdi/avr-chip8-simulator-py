@@ -1,7 +1,6 @@
 from pysimavr.swig.simavr import avr_alloc_irq, avr_raise_irq
 from sdl2 import *
-
-import sys
+from Utils import *
 
 class Keypad:
     keymap = {
@@ -26,14 +25,12 @@ class Keypad:
         SDL_SCANCODE_V: (3, 3)
     }
 
-    def __init__(self, board):
+    def __init__(self, board, rows, cols):
         self.keystate = [[False for i in range(4)] for i in range(4)]
-        self.rows = [avr_alloc_irq(board.avr.irq_pool, 0, 1, None) for i in range(4)]
-        self.cols = [avr_alloc_irq(board.avr.irq_pool, 0, 1, None) for i in range(4)]
-        self.row_selected = [False for row in self.rows]
-
-        for (i, row) in enumerate(self.rows):
-            board.avr.irq._register_callback(row, lambda irq, value, i=i: self.scan_row(i, value), True)
+        self.cols = [board.connect_input(pin) for pin in cols]
+        for (i, pin) in enumerate(rows):
+            board.connect_output(pin, lambda value, i=i: self.scan_row(i, value))
+        self.row_selected = [False for row in rows]
 
     def set_keystate(self, keystate):
         for (scancode, (row, col)) in self.keymap.items():
@@ -44,7 +41,7 @@ class Keypad:
 
         for (j, col) in enumerate(self.cols):
             found = False
-            for (i, row) in enumerate(self.rows):
-                if self.row_selected[i]:
+            for (i, selected) in enumerate(self.row_selected):
+                if selected:
                     found = found or self.keystate[i][j]
-            avr_raise_irq(col, 0 if found else 1)
+            col(active_low(found))

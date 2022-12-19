@@ -6,15 +6,14 @@ class SPIRAM:
     def __init__(self, board):
         self.ram = [0 for i in range(8 * 1024)]
 
-        self.cs = board.create_output()
-        self.cs.value = 1
+        self.cs = 1
         self.miso = board.connect_mosi(self.mosi)
 
         self.addr = 0
         self.state = self.COMMAND
 
     def mosi(self, value):
-        if self.cs.value != 0:
+        if self.cs != 0:
             return
         self.state(value)
         

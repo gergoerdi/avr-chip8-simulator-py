@@ -12,9 +12,9 @@ class Screen:
     BG_COLOR = int(sdl2.ext.Color(0xff, 0x73, 0xBD, 0x71))
     
     def __init__(self, board):
-        self.sce = board.create_output()
-        self.dc = board.create_output()
-        self.reset = board.create_output()
+        self.sce = 1
+        self.dc = 1
+        self.reset = 1
         board.connect_mosi(self.mosi)
         
         self.dirty = False
@@ -37,10 +37,10 @@ class Screen:
         SDL_RenderPresent(self.renderer)
 
     def mosi(self, value):
-        if self.sce.value != 0:
+        if self.sce != 0:
             return
             
-        if self.dc.value == 0:
+        if self.dc == 0:
             print "Command to screen: 0x%02x" % value
             pass
         else:
